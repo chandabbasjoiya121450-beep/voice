@@ -50,10 +50,21 @@ app.add_middleware(
 # Paths
 BASE_DIR = Path(__file__).resolve().parent
 PROJECT_DIR = BASE_DIR.parent
-VOICES_DIR = PROJECT_DIR / "voices"
-OUTPUT_DIR = PROJECT_DIR / "output"
-MODELS_DIR = PROJECT_DIR / "models"
-DATABASE_DIR = PROJECT_DIR / "database"
+
+# Check if running on Hugging Face Spaces to divert writable directories to /tmp
+IS_ON_HF = "SPACE_ID" in os.environ
+
+if IS_ON_HF:
+    VOICES_DIR = Path("/tmp/voices")
+    OUTPUT_DIR = Path("/tmp/output")
+    MODELS_DIR = Path("/tmp/models")
+    DATABASE_DIR = Path("/tmp/database")
+else:
+    VOICES_DIR = PROJECT_DIR / "voices"
+    OUTPUT_DIR = PROJECT_DIR / "output"
+    MODELS_DIR = PROJECT_DIR / "models"
+    DATABASE_DIR = PROJECT_DIR / "database"
+
 FRONTEND_DIR = PROJECT_DIR / "frontend"
 
 # Ensure all directories exist
@@ -61,7 +72,8 @@ VOICES_DIR.mkdir(parents=True, exist_ok=True)
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 MODELS_DIR.mkdir(parents=True, exist_ok=True)
 DATABASE_DIR.mkdir(parents=True, exist_ok=True)
-FRONTEND_DIR.mkdir(parents=True, exist_ok=True)
+if FRONTEND_DIR.exists():
+    FRONTEND_DIR.mkdir(parents=True, exist_ok=True)
 
 DB_PATH = DATABASE_DIR / "metadata.db"
 
