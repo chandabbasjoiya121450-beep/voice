@@ -1,4 +1,41 @@
 import sys
+
+# ─────────────────────────────────────────────────────────────────────────────
+# COMPATIBILITY PATCH: Gradio 4.44.x uses Starlette's OLD TemplateResponse API:
+#   TemplateResponse("template.html", {"request": req, ...})
+# Starlette 0.41+ removed this positional style and now requires:
+#   TemplateResponse(request=req, name="template.html", context={...})
+# This patch makes both styles work transparently.
+# ─────────────────────────────────────────────────────────────────────────────
+try:
+    import starlette.templating as _st
+    _original_TemplateResponse = _st.Jinja2Templates.TemplateResponse
+
+    def _compat_TemplateResponse(self, *args, **kwargs):
+        # Old style: first arg is a string (template name)
+        if args and isinstance(args[0], str):
+            name = args[0]
+            context = args[1] if len(args) > 1 else {}
+            request = context.get("request") if isinstance(context, dict) else None
+            ctx = {k: v for k, v in context.items() if k != "request"} if isinstance(context, dict) else {}
+            try:
+                return _original_TemplateResponse(
+                    self, request=request, name=name, context=ctx,
+                    *args[2:], **kwargs
+                )
+            except TypeError:
+                return _original_TemplateResponse(self, *args, **kwargs)
+        # New style or unknown — pass through unchanged
+        return _original_TemplateResponse(self, *args, **kwargs)
+
+    _st.Jinja2Templates.TemplateResponse = _compat_TemplateResponse
+    print("Starlette TemplateResponse compatibility patch applied.")
+except Exception as e:
+    print(f"Could not apply TemplateResponse patch (non-critical): {e}")
+
+# ─────────────────────────────────────────────────────────────────────────────
+# ZeroGPU spaces mock (for local CPU testing)
+# ─────────────────────────────────────────────────────────────────────────────
 try:
     import spaces
     print("ZeroGPU Spaces environment initialized at entrypoint.")
@@ -21,10 +58,10 @@ import gradio as gr
 os.environ["TTS_HOME"] = "/tmp/models"
 os.environ["COQUI_TOS_AGREED"] = "1"
 
-# Import backend ASGI app
+# Import backend FastAPI app
 from backend.app import app as fastapi_app
 
-# Minimal Gradio demo — iframe points to our custom frontend served at /studio/
+# Minimal Gradio demo — full-screen iframe covers Gradio UI
 with gr.Blocks(title="EchoVibe AI Studio") as demo:
     gr.HTML("""
         <style>
@@ -39,23 +76,21 @@ with gr.Blocks(title="EchoVibe AI Studio") as demo:
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 7860))
 
-    # Step 1: Launch Gradio non-blocking so HF/spaces SDK sets up its ZeroGPU proxy correctly.
-    # Do NOT inject any routes yet — injecting before launch corrupts Gradio's Jinja2 cache.
+    # Launch Gradio non-blocking — spaces SDK sets up ZeroGPU proxy here
     demo.launch(
         server_name="0.0.0.0",
         server_port=port,
-        prevent_thread_lock=True,   # non-blocking — we add routes right after
+        prevent_thread_lock=True,
         show_error=True,
     )
 
-    # Step 2: After the Gradio server is live, safely append our backend routes.
-    # Starlette reads self.routes dynamically on every request, so no restart is needed.
+    # After launch, safely inject backend routes into the live Gradio app
     if demo.app is not None:
         for route in fastapi_app.routes:
             demo.app.routes.append(route)
-        print(f"[EchoVibe] Backend routes registered ({len(fastapi_app.routes)} routes).")
+        print(f"[EchoVibe] {len(fastapi_app.routes)} backend routes registered.")
     else:
         print("[EchoVibe] WARNING: demo.app is None — backend routes not registered.")
 
-    # Step 3: Block the main thread forever so the process stays alive.
+    # Keep main thread alive forever
     demo.block_thread()
