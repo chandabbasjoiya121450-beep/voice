@@ -159,15 +159,37 @@ def load_xtts_model_async():
     xtts_status = "loading"
     print("Starting async download/load of Coqui XTTS v2...")
     try:
-        # Import inside function to avoid slowing down startup
-        from TTS.api import TTS
+        import os
+        from pathlib import Path
         
-        # Configure model cache directory to our project models directory
+        # Configure env variables for lightning fast downloads via HF Transfer
+        os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "1"
         os.environ["TTS_HOME"] = str(MODELS_DIR)
         os.environ["COQUI_TOS_AGREED"] = "1"
         
+        target_dir = MODELS_DIR / "tts/tts_models--multilingual--multi-dataset--xtts_v2"
+        target_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Fast download using huggingface_hub snapshot_download
+        # This downloads weights in ~10-20 seconds on HF infrastructure
+        try:
+            print("Pre-downloading XTTS v2 snapshot via parallel downloader...")
+            from huggingface_hub import snapshot_download
+            snapshot_download(
+                repo_id="coqui/XTTS-v2",
+                local_dir=str(target_dir),
+                local_dir_use_symlinks=False,
+                ignore_patterns=["*.git*", "*README*", "*LICENSE*"]
+            )
+            print("Snapshot download complete!")
+        except Exception as dl_err:
+            print(f"Fast download failed, falling back to standard Coqui downloader: {dl_err}")
+            
+        # Import inside function to avoid slowing down startup
+        from TTS.api import TTS
+        
         # Initialize model (GPU = False for local CPU compliance)
-        # Note: downloads ~2.4GB model files on first invocation
+        # It will see the cached weights and load instantly
         xtts_model = TTS(model_name="tts_models/multilingual/multi-dataset/xtts_v2", gpu=False)
         
         xtts_status = "ready"
@@ -269,6 +291,14 @@ def process_audio_ffmpeg(input_path: Path, output_path: Path, speed: float, pitc
     if normalize:
         filters.append("loudnorm")
         
+    # OPTIMIZATION: If no filters are requested and input format equals output format, skip FFmpeg transcode and copy directly
+    if not filters and input_path.suffix == output_path.suffix:
+        try:
+            shutil.copy(input_path, output_path)
+            return True
+        except Exception as e:
+            print(f"Direct copy failed: {e}. Falling back to FFmpeg.")
+            
     cmd = ["ffmpeg", "-y", "-i", str(input_path)]
     if filters:
         cmd.extend(["-filter:a", ",".join(filters)])
