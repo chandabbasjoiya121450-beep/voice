@@ -47,7 +47,7 @@ import os
 import mimetypes
 from pathlib import Path
 from fastapi import Request
-from fastapi.responses import FileResponse, HTMLResponse, Response
+from fastapi.responses import FileResponse, HTMLResponse, Response, RedirectResponse
 import gradio as gr
 
 os.environ["TTS_HOME"] = "/tmp/models"
@@ -80,11 +80,8 @@ async def serve_studio_files(filepath: str):
 
 @fastapi_app.get("/studio", include_in_schema=False)
 async def serve_studio_root():
-    """Redirect /studio to /studio/index.html"""
-    index = FRONTEND_DIR / "index.html"
-    if index.exists():
-        return FileResponse(str(index), media_type="text/html")
-    return Response("Frontend not found", status_code=404)
+    """Redirect /studio to /studio/ to ensure trailing slash for relative paths"""
+    return RedirectResponse(url="/studio/")
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Minimal Gradio demo — full-screen iframe covers Gradio UI
@@ -95,7 +92,7 @@ with gr.Blocks(title="EchoVibe AI Studio") as demo:
             body,.gradio-container,footer{margin:0!important;padding:0!important;overflow:hidden!important;}
             footer{display:none!important;}
         </style>
-        <iframe src='/studio'
+        <iframe src='/studio/'
             style='position:fixed;top:0;left:0;width:100vw;height:100vh;border:none;z-index:999999;'>
         </iframe>
     """)
