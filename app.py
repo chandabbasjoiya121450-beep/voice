@@ -18,43 +18,44 @@ except ImportError:
 import os
 import gradio as gr
 
-# Set cache directories before importing model
 os.environ["TTS_HOME"] = "/tmp/models"
 os.environ["COQUI_TOS_AGREED"] = "1"
 
-# Import our FastAPI backend app
+# Import backend ASGI app
 from backend.app import app as fastapi_app
 
-# Create the Gradio demo (iframe pointing to our custom frontend at /studio/)
+# Minimal Gradio demo — iframe points to our custom frontend served at /studio/
 with gr.Blocks(title="EchoVibe AI Studio") as demo:
     gr.HTML("""
         <style>
-            body, .gradio-container, #component-0, .main {
-                margin: 0 !important;
-                padding: 0 !important;
-                width: 100vw !important;
-                height: 100vh !important;
-                overflow: hidden !important;
-                background: transparent !important;
-            }
-            footer { display: none !important; }
+            body,.gradio-container,footer{margin:0!important;padding:0!important;overflow:hidden!important;}
+            footer{display:none!important;}
         </style>
         <iframe src='/studio/'
             style='position:fixed;top:0;left:0;width:100vw;height:100vh;border:none;z-index:999999;'>
         </iframe>
     """)
 
-# Inject all our FastAPI routes into Gradio's internal FastAPI app
-# This MUST happen before demo.launch() is called
-for route in fastapi_app.routes:
-    demo.app.routes.append(route)
-
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 7860))
-    # demo.launch() blocks the main thread — this is what HF Spaces expects
+
+    # Step 1: Launch Gradio non-blocking so HF/spaces SDK sets up its ZeroGPU proxy correctly.
+    # Do NOT inject any routes yet — injecting before launch corrupts Gradio's Jinja2 cache.
     demo.launch(
         server_name="0.0.0.0",
         server_port=port,
+        prevent_thread_lock=True,   # non-blocking — we add routes right after
         show_error=True,
-        prevent_thread_lock=False
     )
+
+    # Step 2: After the Gradio server is live, safely append our backend routes.
+    # Starlette reads self.routes dynamically on every request, so no restart is needed.
+    if demo.app is not None:
+        for route in fastapi_app.routes:
+            demo.app.routes.append(route)
+        print(f"[EchoVibe] Backend routes registered ({len(fastapi_app.routes)} routes).")
+    else:
+        print("[EchoVibe] WARNING: demo.app is None — backend routes not registered.")
+
+    # Step 3: Block the main thread forever so the process stays alive.
+    demo.block_thread()
