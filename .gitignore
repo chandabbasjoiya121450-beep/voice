@@ -1,0 +1,12 @@
+venv/
+__pycache__/
+*.pyc
+models/
+voices/
+*.db
+*.wav
+*.mp3
+.cache/
+test_model.pth
+*.incomplete
+.DS_Store

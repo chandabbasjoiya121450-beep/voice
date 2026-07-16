@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EchoVibe Studio - Premium AI Voice Cloning & TTS</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Background Glows -->
+    <div class="bg-glow"></div>
+    <div class="bg-glow bg-glow-2"></div>
+
+    <div class="container">
+        <!-- App Header -->
+        <header class="app-header">
+            <div class="header-main">
+                <div class="logo">
+                    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="logo-icon">
+                        <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
+                        <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                        <line x1="12" x2="12" y1="19" y2="22"/>
+                    </svg>
+                    <h1>EchoVibe <span>Studio</span></h1>
+                </div>
+                <!-- Theme Toggle Button -->
+                <button class="theme-toggle-btn" id="theme-toggle-btn" title="Toggle Light/Dark Mode">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="moon-icon"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="sun-icon" style="display: none;"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+                </button>
+            </div>
+            <p class="subtitle">Zero-Shot AI Voice Cloning & High-Fidelity Multilingual Text-to-Speech Engine</p>
+        </header>
+
+        <!-- Navigation Tabs -->
+        <nav class="app-tabs">
+            <button class="tab-btn active" data-tab="tab-tts">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                Text-to-Speech
+            </button>
+            <button class="tab-btn" data-tab="tab-studio">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                Voice Studio
+            </button>
+            <button class="tab-btn" data-tab="tab-library">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><line x1="9" x2="15" y1="9" y2="9"/><line x1="9" x2="15" y1="13" y2="13"/><line x1="9" x2="13" y1="17" y2="17"/></svg>
+                My Voices
+            </button>
+            <button class="tab-btn" data-tab="tab-history">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>
+                Download History
+            </button>
+        </nav>
+
+        <!-- Main Workspace -->
+        <main class="main-card">
+            
+            <!-- TAB 1: TEXT TO SPEECH -->
+            <div class="tab-content active" id="tab-tts">
+                <div class="grid-two-cols">
+                    <!-- Left Column: Generator Form -->
+                    <div class="form-panel">
+                        <div class="input-group">
+                            <label for="text-input" class="group-label">
+                                Enter Speech Text
+                                <span class="char-counter" id="char-counter">0 / 1000 characters</span>
+                            </label>
+                            <textarea id="text-input" placeholder="Type or paste your text here to generate high-fidelity cloned speech..." maxlength="1000"></textarea>
+                            <button class="clear-btn" id="clear-text-btn" title="Clear text">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                            </button>
+                        </div>
+
+                        <!-- Settings Grid -->
+                        <div class="settings-grid">
+                            <div class="control-box">
+                                <label for="lang-select">Language</label>
+                                <div class="select-wrapper">
+                                    <select id="lang-select">
+                                        <option value="auto" selected>Auto Detect Language</option>
+                                        <option value="en">English</option>
+                                        <option value="ur">Urdu / اردو</option>
+                                        <option value="es">Spanish (Español)</option>
+                                        <option value="fr">French (Français)</option>
+                                        <option value="de">German (Deutsch)</option>
+                                        <option value="it">Italian (Italiano)</option>
+                                        <option value="pt">Portuguese (Português)</option>
+                                        <option value="ru">Russian (Русский)</option>
+                                        <option value="tr">Turkish (Türkçe)</option>
+                                        <option value="ar">Arabic / العربية</option>
+                                        <option value="hi">Hindi / हिन्दी</option>
+                                        <option value="zh">Chinese (中文)</option>
+                                        <option value="ja">Japanese (日本語)</option>
+                                        <option value="ko">Korean (한국어)</option>
+                                    </select>
+                                    <div class="select-arrow"></div>
+                                </div>
+                            </div>
+
+                            <div class="control-box">
+                                <label for="voice-select">Voice Profile</label>
+                                <div class="select-wrapper">
+                                    <select id="voice-select">
+                                        <!-- Loaded dynamically -->
+                                    </select>
+                                    <div class="select-arrow"></div>
+                                </div>
+                            </div>
+
+                            <div class="control-box speed-control">
+                                <div class="label-row">
+                                    <label for="speed-range">Speaking Speed</label>
+                                    <span class="value-badge" id="speed-val">1.0x</span>
+                                </div>
+                                <div class="slider-wrapper">
+                                    <input type="range" id="speed-range" min="0.5" max="2.0" step="0.1" value="1.0">
+                                    <div class="slider-track-fill" id="speed-track-fill"></div>
+                                </div>
+                            </div>
+
+                            <div class="control-box pitch-control">
+                                <div class="label-row">
+                                    <label for="pitch-range">Voice Pitch</label>
+                                    <span class="value-badge" id="pitch-val">1.0x</span>
+                                </div>
+                                <div class="slider-wrapper">
+                                    <input type="range" id="pitch-range" min="0.5" max="2.0" step="0.1" value="1.0">
+                                    <div class="slider-track-fill" id="pitch-track-fill"></div>
+                                </div>
+                            </div>
+
+                            <div class="control-box volume-control">
+                                <div class="label-row">
+                                    <label for="volume-range">Audio Volume</label>
+                                    <span class="value-badge" id="volume-val">1.0x</span>
+                                </div>
+                                <div class="slider-wrapper">
+                                    <input type="range" id="volume-range" min="0.1" max="2.0" step="0.1" value="1.0">
+                                    <div class="slider-track-fill" id="volume-track-fill"></div>
+                                </div>
+                            </div>
+
+                            <div class="control-box">
+                                <label>Output Format</label>
+                                <div class="format-toggle">
+                                    <button class="toggle-option active" data-format="mp3" id="format-mp3">MP3</button>
+                                    <button class="toggle-option" data-format="wav" id="format-wav">WAV</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Audio FX Checkboxes -->
+                        <div class="checkbox-row">
+                            <label class="checkbox-container">
+                                <input type="checkbox" id="trim-silence-check">
+                                <span class="checkmark"></span>
+                                Silence Trimming
+                            </label>
+                            <label class="checkbox-container">
+                                <input type="checkbox" id="normalize-check">
+                                <span class="checkmark"></span>
+                                Audio Normalization
+                            </label>
+                        </div>
+
+                        <!-- Primary Synthesis Action Button -->
+                        <button class="generate-btn" id="generate-btn">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="btn-icon"><polygon points="6 3 20 12 6 21 6 3"/></svg>
+                            <span id="generate-btn-text">Generate Speech</span>
+                        </button>
+                    </div>
+
+                    <!-- Right Column: Customized Audio Player -->
+                    <div class="player-panel">
+                        <h3 class="panel-title">Audio Output</h3>
+                        <div class="player-card empty-player" id="player-card">
+                            <div class="pulse-ring" id="player-pulse" style="display: none;"></div>
+                            
+                            <div class="no-audio-state" id="no-audio-state">
+                                <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" class="waveform-placeholder">
+                                    <path d="M12 2v20"/><path d="M17 5v14"/><path d="M22 9v6"/><path d="M7 8v8"/><path d="M2 10v4"/>
+                                </svg>
+                                <p>Provide text and trigger speech generation to load the player</p>
+                            </div>
+
+                            <div class="active-player-state" id="active-player-state" style="display: none;">
+                                <div class="waveform-animation" id="waveform-visualizer">
+                                    <span></span><span></span><span></span><span></span><span></span>
+                                    <span></span><span></span><span></span><span></span><span></span>
+                                    <span></span><span></span><span></span><span></span><span></span>
+                                </div>
+                                <audio id="audio-element"></audio>
+
+                                <div class="player-controls">
+                                    <button class="play-pause-btn" id="play-pause-btn">
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="play-svg"><polygon points="6 3 20 12 6 21 6 3"/></svg>
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="pause-svg" style="display: none;"><rect x="14" y="4" width="4" height="16" rx="1"/><rect x="6" y="4" width="4" height="16" rx="1"/></svg>
+                                    </button>
+
+                                    <div class="timeline-container">
+                                        <span class="time-label" id="current-time">0:00</span>
+                                        <div class="timeline-slider-wrapper">
+                                            <input type="range" id="timeline-slider" min="0" max="100" value="0">
+                                            <div class="timeline-fill" id="timeline-fill" style="width: 0%"></div>
+                                        </div>
+                                        <span class="time-label" id="duration-time">0:00</span>
+                                    </div>
+                                </div>
+
+                                <div class="player-actions">
+                                    <button class="player-action-btn download-btn" id="download-audio-btn">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                                        Download Audio
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 2: VOICE STUDIO (CLONING WORKSHOP) -->
+            <div class="tab-content" id="tab-studio">
+                <div class="studio-container">
+                    <div class="studio-grid">
+                        <!-- Left Panel: Clone Form -->
+                        <div class="studio-form-card">
+                            <h3 class="panel-title">Clone Custom Voice Profile</h3>
+                            
+                            <div class="consent-alert">
+                                <h4>⚠️ Legality & Ethical Consent</h4>
+                                <p>You are about to upload a voice sample to create a digital voice profile. Cloned voice profiles can synthesize arbitrary speech. Ensure you strictly have permission from the speaker before proceeding.</p>
+                                <label class="checkbox-container consent-checkbox">
+                                    <input type="checkbox" id="ethics-consent">
+                                    <span class="checkmark"></span>
+                                    I confirm that I own this voice or have explicit permission to clone and synthesize it.
+                                </label>
+                            </div>
+
+                            <div class="control-box">
+                                <label for="clone-name">Voice Name</label>
+                                <input type="text" id="clone-name" placeholder="e.g. Cloned Narrator, My Conversational Voice" class="form-input">
+                            </div>
+
+                            <div class="studio-row">
+                                <div class="control-box">
+                                    <label for="clone-lang">Primary Language</label>
+                                    <div class="select-wrapper">
+                                        <select id="clone-lang">
+                                            <option value="en">English</option>
+                                            <option value="ur">Urdu</option>
+                                            <option value="es">Spanish</option>
+                                            <option value="fr">French</option>
+                                            <option value="de">German</option>
+                                            <option value="it">Italian</option>
+                                            <option value="pt">Portuguese</option>
+                                            <option value="ru">Russian</option>
+                                            <option value="tr">Turkish</option>
+                                            <option value="ar">Arabic</option>
+                                            <option value="hi">Hindi</option>
+                                            <option value="zh">Chinese</option>
+                                            <option value="ja">Japanese</option>
+                                            <option value="ko">Korean</option>
+                                        </select>
+                                        <div class="select-arrow"></div>
+                                    </div>
+                                </div>
+
+                                <div class="control-box">
+                                    <label for="clone-label">Acoustic Label</label>
+                                    <div class="select-wrapper">
+                                        <select id="clone-label">
+                                            <option value="Narrator">Narrator</option>
+                                            <option value="Conversational">Conversational</option>
+                                            <option value="Storytelling">Storytelling / Audiobook</option>
+                                            <option value="News Reader">News Reader</option>
+                                            <option value="Character / Gaming">Character / Gaming</option>
+                                            <option value="Promotional / Ad">Promotional / Ad</option>
+                                            <option value="Motivational">Motivational</option>
+                                        </select>
+                                        <div class="select-arrow"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="control-box">
+                                <label>Upload Voice Sample (Clean 30s to 120s WAV/MP3)</label>
+                                <div class="drop-zone" id="audio-drop-zone">
+                                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="drop-icon"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
+                                    <p class="drop-text">Drag and drop audio file here or <span>browse files</span></p>
+                                    <p class="file-info-label" id="drop-file-info"></p>
+                                    <input type="file" id="audio-file-input" accept="audio/wav,audio/mp3,audio/mpeg" style="display: none;">
+                                </div>
+                            </div>
+
+                            <button class="clone-submit-btn" id="clone-submit-btn" disabled>
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="m9 12 2 2 4-4"/></svg>
+                                Create Voice Profile
+                            </button>
+                        </div>
+
+                        <!-- Right Panel: Acoustic Properties Output -->
+                        <div class="analysis-results-card" id="analysis-results-card" style="display: none;">
+                            <h3 class="panel-title">Acoustic Profile Analysis</h3>
+                            <div class="analysis-grid">
+                                <div class="analysis-box">
+                                    <span class="box-lbl">Tone / Pitch Range</span>
+                                    <span class="box-val" id="profile-tone">Deep / Low Pitch</span>
+                                </div>
+                                <div class="analysis-box">
+                                    <span class="box-lbl">Speaking Pace</span>
+                                    <span class="box-val" id="profile-pace">Moderate (115 BPM)</span>
+                                </div>
+                                <div class="analysis-box">
+                                    <span class="box-lbl">Regional Accent</span>
+                                    <span class="box-val" id="profile-accent">General / Neutral</span>
+                                </div>
+                                <div class="analysis-box">
+                                    <span class="box-lbl">Speaking Style</span>
+                                    <span class="box-val" id="profile-style">Conversational</span>
+                                </div>
+                            </div>
+                            <div class="profile-success-msg">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                                Reusable Voice profile is successfully registered in database. You can now select it on the Text-to-Speech tab!
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 3: MY VOICES LIBRARY -->
+            <div class="tab-content" id="tab-library">
+                <div class="library-header-row">
+                    <h3 class="panel-title">Voice Profiles Library</h3>
+                    <button class="seed-sample-btn" id="seed-sample-btn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                        Load English Sample Voice (Testing)
+                    </button>
+                </div>
+                <div class="voices-grid" id="voices-grid">
+                    <!-- Loaded dynamically via JS -->
+                </div>
+            </div>
+
+            <!-- TAB 4: DOWNLOAD HISTORY -->
+            <div class="tab-content" id="tab-history">
+                <h3 class="panel-title">Speech Generation Log</h3>
+                <div class="history-table-container">
+                    <table class="history-table">
+                        <thead>
+                            <tr>
+                                <th>Generated Text</th>
+                                <th>Voice Used</th>
+                                <th>Lang</th>
+                                <th>Parameters</th>
+                                <th>Date & Time</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-table-body">
+                            <!-- Loaded dynamically via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- System Engine Status Bar -->
+        <footer class="app-footer">
+            <div class="status-indicator">
+                <span class="status-dot working" id="server-status-dot"></span>
+                <span id="server-status-text">Connecting to backend...</span>
+            </div>
+            <div class="system-meta">
+                <span id="model-engine-badge" class="badge">Model status...</span>
+                <span id="ffmpeg-badge" class="badge">FFmpeg checking...</span>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Edit Voice Modal -->
+    <div class="modal" id="edit-voice-modal">
+        <div class="modal-content">
+            <h3 class="panel-title">Edit Voice Profile</h3>
+            <div class="control-box">
+                <label for="edit-voice-name">Voice Name</label>
+                <input type="text" id="edit-voice-name" class="form-input" disabled>
+            </div>
+            <div class="control-box">
+                <label for="edit-voice-label">Acoustic Label</label>
+                <div class="select-wrapper">
+                    <select id="edit-voice-label">
+                        <option value="Narrator">Narrator</option>
+                        <option value="Conversational">Conversational</option>
+                        <option value="Storytelling">Storytelling / Audiobook</option>
+                        <option value="News Reader">News Reader</option>
+                        <option value="Character / Gaming">Character / Gaming</option>
+                        <option value="Promotional / Ad">Promotional / Ad</option>
+                        <option value="Motivational">Motivational</option>
+                    </select>
+                    <div class="select-arrow"></div>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="modal-btn cancel-btn" id="modal-cancel-btn">Cancel</button>
+                <button class="modal-btn save-btn" id="modal-save-btn">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div class="toast" id="toast">
+        <span id="toast-message">Notification message</span>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
