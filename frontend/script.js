@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let isPlaying = false;
     let modelStatusPoll = null;
     let editVoiceId = null;
+    let isSeeding = false;
 
     // DOM Elements
     const htmlElement = document.documentElement;
@@ -18,6 +19,19 @@ document.addEventListener('DOMContentLoaded', () => {
     // Tab buttons
     const tabBtns = document.querySelectorAll('.tab-btn');
     const tabContents = document.querySelectorAll('.tab-content');
+
+    // Onboarding Elements
+    const onboardingBanner = document.getElementById('onboarding-banner');
+    const closeBannerBtn = document.getElementById('close-banner-btn');
+    const quickstartBox = document.getElementById('quickstart-box');
+    const quickstartSeedBtn = document.getElementById('quickstart-seed-btn');
+    const quickstartGoCloneBtn = document.getElementById('quickstart-go-clone-btn');
+    const voiceCountBadge = document.getElementById('voice-count-badge');
+
+    // Model Loading Banner
+    const modelLoadingCard = document.getElementById('model-loading-card');
+    const modelProgressFill = document.getElementById('model-progress-fill');
+    const modelProgressPct = document.getElementById('model-progress-pct');
 
     // TTS Generator Form Elements
     const textInput = document.getElementById('text-input');
@@ -101,6 +115,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const modelEngineBadge = document.getElementById('model-engine-badge');
     const ffmpegBadge = document.getElementById('ffmpeg-badge');
 
+    // Language Flags mapping
+    const flags = {
+        en: '🇺🇸', ur: '🇵🇰', ar: '🇸🇦', hi: '🇮🇳', es: '🇪🇸',
+        fr: '🇫🇷', de: '🇩🇪', ru: '🇷🇺', tr: '🇹🇷', it: '🇮🇹',
+        pt: '🇧🇷', zh: '🇨🇳', ja: '🇯🇵', ko: '🇰🇷', pl: '🇵🇱',
+        nl: '🇳🇱', cs: '🇨🇿'
+    };
+
     // ----------------------------------------------------
     // Theme Manager
     // ----------------------------------------------------
@@ -129,14 +151,26 @@ document.addEventListener('DOMContentLoaded', () => {
     // ----------------------------------------------------
     // Tabs Navigation
     // ----------------------------------------------------
+    function switchTab(tabId) {
+        tabBtns.forEach(b => {
+            if (b.dataset.tab === tabId) {
+                b.classList.add('active');
+            } else {
+                b.classList.remove('active');
+            }
+        });
+        tabContents.forEach(c => {
+            if (c.id === tabId) {
+                c.classList.add('active');
+            } else {
+                c.classList.remove('active');
+            }
+        });
+    }
+
     tabBtns.forEach(btn => {
         btn.addEventListener('click', () => {
-            tabBtns.forEach(b => b.classList.remove('active'));
-            tabContents.forEach(c => c.classList.remove('active'));
-            
-            btn.classList.add('active');
-            const targetTab = btn.dataset.tab;
-            document.getElementById(targetTab).classList.add('active');
+            switchTab(btn.dataset.tab);
         });
     });
 
@@ -273,6 +307,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (data.status === 'ready') {
                 modelEngineBadge.textContent = 'XTTS v2 Engine Ready';
                 modelEngineBadge.className = 'badge success';
+                modelLoadingCard.style.display = 'none';
                 generateBtn.disabled = false;
                 generateBtn.classList.remove('loading');
                 generateBtnText.textContent = 'Generate Speech';
@@ -288,17 +323,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 modelEngineBadge.textContent = `Downloading: ${downloaded}MB / ${total}MB (${percentage}%)`;
                 modelEngineBadge.className = 'badge warning';
+                
+                // Show beautiful Loading Card
+                modelLoadingCard.style.display = 'flex';
+                modelProgressFill.style.width = `${percentage}%`;
+                modelProgressPct.textContent = `${percentage}%`;
+                
                 generateBtn.disabled = true;
                 generateBtn.classList.add('loading');
                 generateBtnText.textContent = `Downloading (${percentage}%)`;
                 
                 // Start polling if not already started
                 if (!modelStatusPoll) {
-                    modelStatusPoll = setInterval(checkModelStatus, 3000);
+                    modelStatusPoll = setInterval(checkModelStatus, 2000);
                 }
             } else if (data.status === 'failed') {
                 modelEngineBadge.textContent = 'XTTS v2 Init Failed';
                 modelEngineBadge.className = 'badge warning';
+                modelLoadingCard.style.display = 'none';
                 showToast(`Voice model failed to initialize: ${data.error}`, 'error');
                 generateBtn.disabled = true;
                 generateBtnText.textContent = 'Engine Offline';
@@ -309,6 +351,7 @@ document.addEventListener('DOMContentLoaded', () => {
             serverStatusText.textContent = 'Backend Connection Lost';
             modelEngineBadge.textContent = 'Offline';
             modelEngineBadge.className = 'badge warning';
+            modelLoadingCard.style.display = 'none';
             generateBtn.disabled = true;
         }
     }
@@ -318,55 +361,83 @@ document.addEventListener('DOMContentLoaded', () => {
     // ----------------------------------------------------
     // Load Voice Profiles Dropdown & Grid
     // ----------------------------------------------------
-    async function loadVoices() {
+    async function loadVoices(autoSeedIfEmpty = true) {
         try {
             const res = await fetch(`${API_BASE}/api/voices`);
             if (!res.ok) throw new Error();
             const data = await res.json();
             voicesList = data.voices;
-            
-            // 1. Populate Dropdown in TAB 1
-            voiceSelect.innerHTML = '';
-            if (voicesList.length === 0) {
-                const opt = document.createElement('option');
-                opt.value = '';
-                opt.textContent = '-- No custom voices created yet --';
-                voiceSelect.appendChild(opt);
-            } else {
-                voicesList.forEach(voice => {
-                    const opt = document.createElement('option');
-                    opt.value = voice.name;
-                    opt.textContent = `${voice.name} (${voice.label}) ${voice.is_favorite ? '★' : ''}`;
-                    voiceSelect.appendChild(opt);
-                });
-            }
 
-            // 2. Populate Grid in TAB 3
-            renderVoicesLibrary();
+            // Update badge counts
+            voiceCountBadge.textContent = voicesList.length;
+            
+            // If empty, auto-seed a voice so user isn't stuck
+            if (voicesList.length === 0) {
+                // Show Onboarding banner & quickstart
+                onboardingBanner.style.display = 'flex';
+                quickstartBox.style.display = 'block';
+
+                if (autoSeedIfEmpty && !isSeeding) {
+                    isSeeding = true;
+                    console.log('Voices list empty, seeding sample voice...');
+                    showToast('First time setup: Loading standard English voice profile...', 'info');
+                    await seedSampleVoice();
+                } else {
+                    populateVoiceDropdown([]);
+                    renderVoicesLibrary([]);
+                }
+            } else {
+                // Hide Onboarding & Quickstart since voice is present
+                onboardingBanner.style.display = 'none';
+                quickstartBox.style.display = 'none';
+                
+                populateVoiceDropdown(voicesList);
+                renderVoicesLibrary(voicesList);
+            }
         } catch (err) {
+            console.error(err);
             showToast('Failed to fetch voice profiles.', 'error');
         }
     }
 
-    function renderVoicesLibrary() {
-        if (voicesList.length === 0) {
+    function populateVoiceDropdown(voices) {
+        voiceSelect.innerHTML = '';
+        if (voices.length === 0) {
+            const opt = document.createElement('option');
+            opt.value = '';
+            opt.textContent = '❌ Go to My Voices & click Load Standard Voice';
+            voiceSelect.appendChild(opt);
+        } else {
+            voices.forEach(voice => {
+                const opt = document.createElement('option');
+                opt.value = voice.name;
+                const flag = flags[voice.language] || '🌐';
+                opt.textContent = `${flag} ${voice.name} (${voice.label}) ${voice.is_favorite ? '★' : ''}`;
+                voiceSelect.appendChild(opt);
+            });
+        }
+    }
+
+    function renderVoicesLibrary(voices) {
+        if (voices.length === 0) {
             voicesGrid.innerHTML = `
                 <div class="history-empty" style="grid-column: 1 / -1;">
-                    <p>Voice Library is empty. Upload a sample in the Voice Studio tab to clone your first voice.</p>
+                    <p>Voice Library is empty. Click the button above to load a standard voice, or use the Voice Studio tab to clone your own voice.</p>
                 </div>
             `;
             return;
         }
 
         voicesGrid.innerHTML = '';
-        voicesList.forEach(voice => {
+        voices.forEach(voice => {
             const card = document.createElement('div');
             card.className = `voice-card ${voice.is_favorite ? 'favorite' : ''}`;
+            const flag = flags[voice.language] || '🌐';
             
             card.innerHTML = `
                 <div class="voice-card-header">
                     <div class="voice-info-col">
-                        <h4 title="${escapeHtml(voice.name)}">${escapeHtml(voice.name)}</h4>
+                        <h4 title="${escapeHtml(voice.name)}">${flag} ${escapeHtml(voice.name)}</h4>
                         <div class="voice-badges">
                             <span class="voice-lbl-badge">${escapeHtml(voice.label)}</span>
                             <span class="voice-lang-badge">${escapeHtml(voice.language.toUpperCase())}</span>
@@ -409,7 +480,8 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
 
             // Favorite Button Click
-            card.querySelector('.voice-favorite-btn').onclick = async () => {
+            card.querySelector('.voice-favorite-btn').onclick = async (e) => {
+                e.stopPropagation();
                 const newFav = voice.is_favorite ? 0 : 1;
                 await updateVoiceDetails(voice.id, { is_favorite: newFav });
             };
@@ -435,31 +507,53 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    loadVoices();
-
     // ----------------------------------------------------
-    // Seed Sample Voice Profile
+    // Seed Standard Voice Profile Call
     // ----------------------------------------------------
-    seedSampleBtn.addEventListener('click', async () => {
+    async function seedSampleVoice() {
         try {
-            seedSampleBtn.disabled = true;
-            seedSampleBtn.innerHTML = 'Seeding voice...';
             const res = await fetch(`${API_BASE}/api/voices/sample`, { method: 'POST' });
             if (!res.ok) throw new Error();
             const data = await res.json();
             if (data.status === 'created') {
                 showToast('Sample English Narrator voice successfully added to library!', 'success');
             } else {
-                showToast('Sample voice already loaded.', 'success');
+                showToast('Standard English Narrator voice is ready.', 'success');
             }
-            await loadVoices();
+            await loadVoices(false); // Reload but do not trigger recursion
         } catch (err) {
-            showToast('Failed to load sample voice clip.', 'error');
+            console.error('Failed to seed standard voice profile:', err);
+            showToast('Failed to load default English sample voice.', 'error');
         } finally {
-            seedSampleBtn.disabled = false;
-            seedSampleBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg> Load English Sample Voice (Testing)`;
+            isSeeding = false;
         }
+    }
+
+    seedSampleBtn.addEventListener('click', async () => {
+        seedSampleBtn.disabled = true;
+        seedSampleBtn.innerHTML = '<span class="spinner-ring" style="width: 14px; height: 14px; display: inline-block;"></span> Seeding voice...';
+        await seedSampleVoice();
+        seedSampleBtn.disabled = false;
+        seedSampleBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg> Load Standard Sample Voice (English)`;
     });
+
+    quickstartSeedBtn.addEventListener('click', async () => {
+        quickstartSeedBtn.disabled = true;
+        quickstartSeedBtn.innerHTML = '🚀 Seeding sample voice...';
+        await seedSampleVoice();
+        quickstartSeedBtn.disabled = false;
+        quickstartSeedBtn.innerHTML = '🚀 Load Default English Voice';
+    });
+
+    quickstartGoCloneBtn.addEventListener('click', () => {
+        switchTab('tab-studio');
+    });
+
+    closeBannerBtn.addEventListener('click', () => {
+        onboardingBanner.style.display = 'none';
+    });
+
+    loadVoices();
 
     // ----------------------------------------------------
     // Update & Delete Voices Profile
@@ -472,8 +566,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify(payload)
             });
             if (!res.ok) throw new Error();
-            showToast('Voice updated successfully.', 'success');
-            await loadVoices();
+            showToast('Voice profile updated successfully.', 'success');
+            await loadVoices(false);
         } catch (err) {
             showToast('Failed to update voice.', 'error');
         }
@@ -486,7 +580,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             if (!res.ok) throw new Error();
             showToast('Voice profile deleted.', 'success');
-            await loadVoices();
+            await loadVoices(false);
         } catch (err) {
             showToast('Failed to delete voice profile.', 'error');
         }
@@ -541,11 +635,11 @@ document.addEventListener('DOMContentLoaded', () => {
             showToast(`Voice profile "${name}" successfully cloned!`, 'success');
             
             // Display acoustic output results
-            profileTone.textContent = data.tone;
-            profilePace.textContent = data.pace;
-            profileAccent = data.accent;
-            profileStyle = data.speaking_style;
-            analysisResultsCard.style.display = 'flex';
+            profileTone.textContent = data.tone || 'Balanced';
+            profilePace.textContent = data.pace || 'Moderate';
+            profileAccent.textContent = data.accent || 'Neutral';
+            profileStyle.textContent = data.speaking_style || 'Conversational';
+            analysisResultsCard.style.display = 'block';
 
             // Reset inputs
             cloneName.value = '';
@@ -553,7 +647,15 @@ document.addEventListener('DOMContentLoaded', () => {
             selectedFile = null;
             dropFileInfo.textContent = '';
             
-            await loadVoices();
+            await loadVoices(false);
+
+            // Redirect user to Text-to-Speech tab after a small delay
+            setTimeout(() => {
+                switchTab('tab-tts');
+                // Select newly cloned voice
+                voiceSelect.value = name;
+            }, 2500);
+
         } catch (err) {
             showToast(err.message || 'Error uploading voice profile.', 'error');
         } finally {
@@ -580,8 +682,9 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        if (!voiceName) {
-            showToast('Please select a Voice Profile. Seed one in My Voices if empty.', 'error');
+        if (!voiceName || voiceSelect.selectedIndex === -1 || voiceSelect.value.startsWith('❌')) {
+            showToast('Please select a Voice Profile. Go to My Voices tab and load the standard voice to get started!', 'error');
+            switchTab('tab-library');
             return;
         }
 
@@ -647,6 +750,7 @@ document.addEventListener('DOMContentLoaded', () => {
         audioElement.src = url;
         audioElement.load();
 
+        playerCard.classList.remove('empty-player');
         playerCard.classList.add('active');
         noAudioState.style.display = 'none';
         activePlayerState.style.display = 'flex';
@@ -771,10 +875,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             history.forEach(item => {
                 const tr = document.createElement('tr');
+                const flag = flags[item.language] || '🌐';
                 tr.innerHTML = `
                     <td><div class="history-text-col" title="${escapeHtml(item.text)}">${escapeHtml(item.text)}</div></td>
                     <td><strong>${escapeHtml(item.voice_name)}</strong></td>
-                    <td><span class="voice-lang-badge">${escapeHtml(item.language.toUpperCase())}</span></td>
+                    <td><span class="voice-lang-badge">${flag} ${escapeHtml(item.language.toUpperCase())}</span></td>
                     <td>
                         <span style="font-size: 0.75rem; color: var(--text-muted)">
                             Spd: ${item.speed}x | Pch: ${item.pitch}x | Vol: ${item.volume}x
@@ -856,7 +961,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         setTimeout(() => {
             toast.classList.remove('show');
-        }, 3800);
+        }, 4000);
     }
 
     function escapeHtml(text) {
