@@ -1,3 +1,14 @@
+---
+title: EchoVibe AI Studio
+emoji: 🎙️
+colorFrom: indigo
+colorTo: purple
+sdk: gradio
+sdk_version: 4.36.1
+app_file: app.py
+pinned: false
+---
+
 # EchoVibe Studio - Premium AI Voice Cloning & Multilingual TTS
 
 EchoVibe Studio is a complete, free, fully offline-capable Text-to-Speech (TTS) web application built using Python (FastAPI) and a modern glassmorphic HTML5/CSS3/JavaScript frontend. It leverages **Coqui XTTS v2** for zero-shot voice cloning and synthesis in 14+ languages.
