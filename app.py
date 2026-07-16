@@ -1,3 +1,9 @@
+try:
+    import spaces
+    print("ZeroGPU Spaces environment initialized at entrypoint.")
+except ImportError:
+    print("Running outside Hugging Face ZeroGPU environment.")
+
 import os
 import uvicorn
 
