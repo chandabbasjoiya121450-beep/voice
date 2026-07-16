@@ -1,6 +1,8 @@
 fastapi>=0.100.0
 uvicorn>=0.22.0
 requests>=2.31.0
+torch
+torchaudio
 coqui-tts>=0.27.5
 langdetect>=1.0.9
 python-multipart>=0.0.9

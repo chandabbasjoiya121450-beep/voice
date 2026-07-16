@@ -94,9 +94,49 @@ init_db()
 # ----------------------------------------------------
 # Global Model State & Asynchronous Loading
 # ----------------------------------------------------
+# ZeroGPU fallback decorator for compatibility with local / serverless CPU
+try:
+    import spaces
+    gpu_decorator = spaces.GPU
+    print("ZeroGPU Spaces decorator detected and loaded successfully.")
+except ImportError:
+    # No-op decorator fallback
+    def gpu_decorator(func):
+        return func
+    print("Running in non-ZeroGPU environment (standard local CPU/GPU).")
+
 xtts_model = None
 xtts_status = "idle"  # idle, loading, ready, failed
 xtts_error = None
+
+@gpu_decorator
+def run_tts_inference(text, speaker_wav, language, file_path):
+    global xtts_model
+    # Move model to CUDA dynamically if running in ZeroGPU
+    import torch
+    use_gpu = torch.cuda.is_available()
+    if use_gpu and xtts_model is not None and hasattr(xtts_model, "synthesizer") and hasattr(xtts_model.synthesizer, "tts_model"):
+        try:
+            xtts_model.synthesizer.tts_model.to("cuda")
+            print("Moved model to CUDA for ZeroGPU inference.")
+        except Exception as e:
+            print(f"Failed to move model to CUDA: {e}")
+            use_gpu = False
+        
+    xtts_model.tts_to_file(
+        text=text,
+        speaker_wav=speaker_wav,
+        language=language,
+        file_path=file_path
+    )
+    
+    # Move back to CPU after inference to free GPU memory
+    if use_gpu and xtts_model is not None and hasattr(xtts_model, "synthesizer") and hasattr(xtts_model.synthesizer, "tts_model"):
+        try:
+            xtts_model.synthesizer.tts_model.to("cpu")
+            print("Returned model to CPU to release GPU memory.")
+        except Exception as e:
+            print(f"Failed to return model to CPU: {e}")
 
 def load_xtts_model_async():
     global xtts_model, xtts_status, xtts_error
@@ -512,7 +552,7 @@ def generate_speech(request: GenerateRequest):
     try:
         # 1. Synthesize Cloned Speech via Coqui XTTS
         # Generates a high-quality 24kHz audio file
-        xtts_model.tts_to_file(
+        run_tts_inference(
             text=request.text,
             speaker_wav=str(speaker_wav_path),
             language=lang_code,
