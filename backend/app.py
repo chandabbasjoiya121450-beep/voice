@@ -666,4 +666,4 @@ def delete_history_item(clip_id: int):
 
 # Mount Frontend static files
 if FRONTEND_DIR.exists():
-    app.mount("/", StaticFiles(directory=str(FRONTEND_DIR), html=True), name="frontend")
+    app.mount("/studio", StaticFiles(directory=str(FRONTEND_DIR), html=True), name="frontend")

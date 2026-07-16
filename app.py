@@ -15,9 +15,11 @@ os.environ["COQUI_TOS_AGREED"] = "1"
 # Import our FastAPI app
 from backend.app import app as fastapi_app
 
-# Create a minimal Gradio demo to satisfy Hugging Face ZeroGPU hooks
-with gr.Blocks() as demo:
-    gr.Markdown("# EchoVibe AI Studio is running on ZeroGPU!")
+# Create a minimal Gradio demo to satisfy Hugging Face ZeroGPU hooks and display our custom UI
+with gr.Blocks(title="EchoVibe AI Studio") as demo:
+    gr.HTML(
+        "<iframe src='/studio/' style='position:fixed; top:0; left:0; width:100vw; height:100vh; border:none; margin:0; padding:0; z-index:999999;'></iframe>"
+    )
 
 # Mount the Gradio app to our FastAPI app at root '/'
 app = gr.mount_gradio_app(fastapi_app, demo, path="/")
