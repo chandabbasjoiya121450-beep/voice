@@ -19,8 +19,8 @@ from backend.app import app as fastapi_app
 with gr.Blocks() as demo:
     gr.Markdown("# EchoVibe AI Studio is running on ZeroGPU!")
 
-# Mount the Gradio app to our FastAPI app
-app = gr.mount_gradio_app(fastapi_app, demo, path="/gradio")
+# Mount the Gradio app to our FastAPI app at root '/'
+app = gr.mount_gradio_app(fastapi_app, demo, path="/")
 
 if __name__ == "__main__":
     # Hugging Face Spaces passes the port in the PORT environment variable (defaults to 7860)
