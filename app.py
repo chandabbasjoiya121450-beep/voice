@@ -18,30 +18,43 @@ except ImportError:
 import os
 import gradio as gr
 
-# Set cache directories to local folders inside Space before importing model
+# Set cache directories before importing model
 os.environ["TTS_HOME"] = "/tmp/models"
 os.environ["COQUI_TOS_AGREED"] = "1"
 
-# Import our FastAPI app
+# Import our FastAPI backend app
 from backend.app import app as fastapi_app
 
-# Create a minimal Gradio demo to satisfy Hugging Face ZeroGPU hooks and display our custom UI
+# Create the Gradio demo (iframe pointing to our custom frontend at /studio/)
 with gr.Blocks(title="EchoVibe AI Studio") as demo:
-    gr.HTML(
-        "<iframe src='/studio/' style='position:fixed; top:0; left:0; width:100vw; height:100vh; border:none; margin:0; padding:0; z-index:999999;'></iframe>"
-    )
+    gr.HTML("""
+        <style>
+            body, .gradio-container, #component-0, .main {
+                margin: 0 !important;
+                padding: 0 !important;
+                width: 100vw !important;
+                height: 100vh !important;
+                overflow: hidden !important;
+                background: transparent !important;
+            }
+            footer { display: none !important; }
+        </style>
+        <iframe src='/studio/'
+            style='position:fixed;top:0;left:0;width:100vw;height:100vh;border:none;z-index:999999;'>
+        </iframe>
+    """)
 
-# Create the Gradio FastAPI application (which sets up all Gradio middlewares and ZeroGPU hooks)
-app = gr.routes.App.create_app(demo)
-
-# Inject all routes from our FastAPI backend app directly into the Gradio app
-# This merges our API endpoints and '/studio' static mount into the Gradio app
+# Inject all our FastAPI routes into Gradio's internal FastAPI app
+# This MUST happen before demo.launch() is called
 for route in fastapi_app.routes:
-    app.routes.append(route)
+    demo.app.routes.append(route)
 
 if __name__ == "__main__":
-    import uvicorn
-    # Hugging Face Spaces passes the port in the PORT environment variable (defaults to 7860)
     port = int(os.environ.get("PORT", 7860))
-    # Run the merged app using uvicorn
-    uvicorn.run("app:app", host="0.0.0.0", port=port, reload=False, workers=1)
+    # demo.launch() blocks the main thread — this is what HF Spaces expects
+    demo.launch(
+        server_name="0.0.0.0",
+        server_port=port,
+        show_error=True,
+        prevent_thread_lock=False
+    )
