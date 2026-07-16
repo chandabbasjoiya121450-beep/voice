@@ -72,8 +72,7 @@ VOICES_DIR.mkdir(parents=True, exist_ok=True)
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 MODELS_DIR.mkdir(parents=True, exist_ok=True)
 DATABASE_DIR.mkdir(parents=True, exist_ok=True)
-if FRONTEND_DIR.exists():
-    FRONTEND_DIR.mkdir(parents=True, exist_ok=True)
+# FRONTEND_DIR is read-only source code — do not try to create it
 
 DB_PATH = DATABASE_DIR / "metadata.db"
 
@@ -681,6 +680,5 @@ def delete_history_item(clip_id: int):
         
     return {"status": "success", "message": "History clip deleted."}
 
-# Mount Frontend static files
-if FRONTEND_DIR.exists():
-    app.mount("/studio", StaticFiles(directory=str(FRONTEND_DIR), html=True), name="frontend")
+# Mount Frontend static files — always mount, directory is shipped with the code
+app.mount("/studio", StaticFiles(directory=str(FRONTEND_DIR), html=True), name="frontend")
