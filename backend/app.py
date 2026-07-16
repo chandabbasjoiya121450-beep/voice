@@ -1,6 +1,22 @@
+import sys
+try:
+    import spaces
+    print("ZeroGPU Spaces environment initialized successfully.")
+except ImportError:
+    class MockSpaces:
+        @staticmethod
+        def GPU(func=None, duration=None):
+            if func is None:
+                def decorator(f):
+                    return f
+                return decorator
+            return func
+    sys.modules["spaces"] = MockSpaces
+    import spaces
+    print("Mock spaces module registered for CPU/local compatibility.")
+
 import os
 os.environ["HF_ENDPOINT"] = "https://hf-mirror.com"
-import sys
 import uuid
 import shutil
 import sqlite3
@@ -94,22 +110,11 @@ init_db()
 # ----------------------------------------------------
 # Global Model State & Asynchronous Loading
 # ----------------------------------------------------
-# ZeroGPU fallback decorator for compatibility with local / serverless CPU
-try:
-    import spaces
-    gpu_decorator = spaces.GPU
-    print("ZeroGPU Spaces decorator detected and loaded successfully.")
-except ImportError:
-    # No-op decorator fallback
-    def gpu_decorator(func):
-        return func
-    print("Running in non-ZeroGPU environment (standard local CPU/GPU).")
-
 xtts_model = None
 xtts_status = "idle"  # idle, loading, ready, failed
 xtts_error = None
 
-@gpu_decorator
+@spaces.GPU(duration=120)
 def run_tts_inference(text, speaker_wav, language, file_path):
     global xtts_model
     # Move model to CUDA dynamically if running in ZeroGPU
