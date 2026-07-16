@@ -51,7 +51,7 @@ def download_parallel(url, dest_path, num_connections=16):
             end = total_size - 1 if i == num_connections - 1 else (i + 1) * chunk_size - 1
             chunk_file = f"{dest_path}.chunk.{i}"
             chunk_files.append(chunk_file)
-            futures.append(executor.submit(download_chunk, resolved_url, start, end, chunk_file))
+            futures.append(executor.submit(download_chunk, url, start, end, chunk_file))
             
         # Monitor progress
         while True:
